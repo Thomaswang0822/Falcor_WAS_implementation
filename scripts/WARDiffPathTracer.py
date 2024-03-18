@@ -1,14 +1,15 @@
 from falcor import *
 
-def render_graph_WARDiffPathTracer():
+def render_graph_WARDiffPathTracer(maxBounces=0, spp=1):
     g = RenderGraph("WARDiffPathTracer")
     WARDiffPathTracer = createPass("WARDiffPathTracer",
                                    {
-                                       "maxBounces": 0,
-                                       "samplesPerPixel": 1,
+                                       "maxBounces": maxBounces,
+                                       "samplesPerPixel": spp,
                                        "diffMode": "ForwardDiffDebug",
-                                       #"diffVarName": "CBOX_BUNNY_MATERIAL",
+                                    #    "diffMode": "BackwardDiffDebug",
                                        "diffVarName": "CBOX_BUNNY_TRANSLATION",
+                                       "sampleGenerator": 0,  # 0: tiny uniform; 1: uniform
                                    })
     g.addPass(WARDiffPathTracer, "WARDiffPathTracer")
 
@@ -28,7 +29,7 @@ def render_graph_WARDiffPathTracer():
     g.markOutput("ColorMapPassDiff.output")
     return g
 
-WARDiffPathTracer = render_graph_WARDiffPathTracer()
+WARDiffPathTracer = render_graph_WARDiffPathTracer(4, 8)  # max bounces, sample per pixel
 try: m.addGraph(WARDiffPathTracer)
 except NameError: None
 

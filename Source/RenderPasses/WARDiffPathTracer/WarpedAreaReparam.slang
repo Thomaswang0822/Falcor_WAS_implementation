@@ -73,7 +73,7 @@ float computeHarmonicWeight(
     return w;
 }
 
-
+/*
 [Differentiable]
 [PreferRecompute]
 DifferentialPair<float> fwd_computeHarmonicWeight(
@@ -107,7 +107,7 @@ DifferentialPair<float> fwd_computeHarmonicWeight(
 
     return DifferentialPair<float>(w, clamp(dW, -1e10f, 1e10f));
 }
-
+ */
 
 // Create a wrapper for reflect(). This isn't marked with [Differentiable].
 // (For some reason, we're ignoring detach when differentiating things.)
