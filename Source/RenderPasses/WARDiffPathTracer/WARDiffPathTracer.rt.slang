@@ -80,7 +80,7 @@ float3 tracePath(SceneQueryAD sceneQuery, float2 pixel, no_diff float2 pixelCent
     // Warped-area reparameterization for primary rays.
     if (kUseWAR)
     {
-        float weight = reparameterizeScreenSample(sceneQuery, gDiffPTData.params.frameDim, sg, pixel);
+        float weight = reparameterizePrimarySample(sceneQuery, gDiffPTData.params.frameDim, sg, pixel);
         pathData.thp *= weight;
     }
 
