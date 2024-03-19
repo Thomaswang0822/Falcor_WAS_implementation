@@ -58,56 +58,15 @@ float computeHarmonicWeight(
     float3 direction  // ray dir (omega) differential w.r.t. this direction
 )
 {
-    float boundaryTerm = no_diff computeBoundaryTerm(isect.normalW, auxDirection);
+    // find boundary Term B; no_diff
 
-    float sy = max(1.f - auxSampleY, 1e-6f);
+
+
     // see WAS paper Algorithm 2, computation of weight_i
-    /* float invVMFDensity = 1.f / ((1.f - sy) * exp(-2.f * kappa) + sy);
 
-    float wDenom = invVMFDensity - 1.f + boundaryTerm;
-    float wDenomRcp = select(wDenom > 1e-4f, 1.f / wDenom, 0.f);
-    float w = wDenomRcp * wDenomRcp * wDenomRcp * invVMFDensity; */
-
-    float VMFDensity = (1.f - sy) * exp(-2.f * kappa) + sy;
-    float w = 1.f / (VMFDensity - 1.f + boundaryTerm) / VMFDensity;
-    return w;
+    return 1.f;
 }
 
-/*
-[Differentiable]
-[PreferRecompute]
-DifferentialPair<float> fwd_computeHarmonicWeight(
-    IntersectionAD isect,
-    float3 origin,
-    float3 auxDirection,
-    float auxSampleY,
-    float kappa,
-    DifferentialPair<float3> direction
-)
-// Tracing back to reparameterizeRay(), direction is defined as
-// DifferentialPair<float3[3]>(
-//     { ray.direction, ray.direction, ray.direction }, { float3(1.f, 0.f, 0.f), float3(0.f, 1.f, 0.f), float3(0.f, 0.f, 1.f) }
-// );
-// Essentially, we manual diff w.r.t. x & y & z of ray.dir
-{
-    // TODO: how to change accordingly in the fwd pass
-    float boundaryTerm = no_diff computeBoundaryTerm(isect.normalW, auxDirection);
-
-    float sy = max(1.f - auxSampleY, 1e-6f);
-    float invVMFDensity = 1.f / ((1.f - sy) * exp(-2.f * kappa) + sy);
-
-    float wDenom = invVMFDensity - 1.f + boundaryTerm;
-    float wDenomRcp = select(wDenom > 1e-4f, 1.f / wDenom, 0.f);
-    float w = wDenomRcp * wDenomRcp * wDenomRcp * invVMFDensity;
-
-    float tmp1 = invVMFDensity * w * wDenomRcp * kappa * 3;
-    // Project `auxDirection` onto the plane of `direction`.
-    float3 tmp2 = -cross(direction.p, cross(direction.p, direction.d));
-    float dW = tmp1 * dot(tmp2, auxDirection);
-
-    return DifferentialPair<float>(w, clamp(dW, -1e10f, 1e10f));
-}
- */
 
 // Create a wrapper for reflect(). This isn't marked with [Differentiable].
 // (For some reason, we're ignoring detach when differentiating things.)
@@ -131,87 +90,85 @@ __generic<let N : int> bool traceAsymptoticWeightedMeanIntersection(
     inout SampleGenerator sg       // usage sampleNext[1 or 2]D(sg)
 )
 {
-    float totalWeight[N];
-    float3 totalWarpedDirection[N];
+    // init storage of W and warpedDir, both List[N]
+
 
     // Initialize.
     [ForceUnroll]
     for (int j = 0; j < N; j++)
     {
-        totalWeight[j] = 0.f;
-        totalWarpedDirection[j] = float3(0.f);
+
     }
 
     // prepare random numbers for antithetic sample:
     // normally, each auxRay calling sampleVonMisesFisher() takes float2,
     // but with antithetic sampling, each 2 rays share 2 numbers, (and we negate 1 later)
-    float rnd[AUX_SAMPLE_COUNT];
-    for (uint i = 0; i < kAuxSampleCount; i++)
-        rnd[i] = no_diff sampleNext1D(sg);
 
-    // Create a local frame based on `baseDirection`.
-    float3 t = no_diff perp_stark(baseDirection);
-    ShadingFrame baseDirFrame = ShadingFrame(baseDirection, float4(t, 1.f));
+    // Create a local frame based on `baseDirection`; use no_diff perp_stark
+
 
     // Loop over the number of auxiliary samples.
     [MaxIters(AUX_SAMPLE_COUNT)]
     for (uint i = 0; i < kAuxSampleCount; i++)
     {
-        float2 sample;
-        if (kUseAntitheticSampling)
+
+        // whether to use antithetic sample
+        if (true)
         {
             // auxRay_i and auxRay_(i+1) shares the same 2 rnd numbers
-            uint antitheticIdx = i / 2;
-            sample = float2(rnd[antitheticIdx * 2], rnd[antitheticIdx * 2 + 1]);
+
         }
         else
         {
-            sample = no_diff sampleNext2D(sg);
+            // sample() function should also be no_diff
         }
 
-        float3 dirLocal = no_diff sampleVonMisesFisher(sample, kappa);
-        float3 auxDirection = detach(normalize(baseDirFrame.fromLocal(dirLocal)));
+        // sample local direction from VMF; no_diff
+
+        // transform, normalize, detach to get auxDir in world
+
         // flip those antithetic sample
-        if (kUseAntitheticSampling && i % 2 == 1)
+        if (true)
         {
-            // Every other sample, reflect `auxDirection` about `baseDirection`.
-            auxDirection = no_diff _reflect(-auxDirection, baseDirection);
+            // Every other sample, no_diff reflect `auxDirection` about `baseDirection`.
+
         }
 
-        // Build a new RayAD with `auxDirection`.
-        RayAD auxRay = RayAD(origin, auxDirection, sceneQuery.gradInfo.pixel);
-        IntersectionAD auxIsect = IntersectionAD();
+        // Build a new RayAD with `auxDirection` and its IntersectionAD
 
-        float3 dirW = auxDirection;
-        // Trace the ray and intersect
-        if (sceneQuery.traceRayInlineAD(auxRay, auxIsect, SceneQueryAD.DiffIntersectionMode.AttachToGeometry))
+
+        // create copy of auxDir
+
+        // Trace the ray and intersect; mode is AttachToGeometry
+        if (true)
         {
-            dirW = normalizeSafe(auxIsect.posW - origin);
+            // update copy with normalized (hit - origin)
+
         }
 
         [ForceUnroll]
         for (int j = 0; j < N; j++)
         {
             // for each i, weight_ij are the same for all j, since direction[j] is for autodiff, not computation
-            float weight = computeHarmonicWeight(auxIsect, origin, auxDirection, sample.y, kappa, direction[j]);
-            totalWeight[j] += weight;
-            totalWarpedDirection[j] += float3(weight) * dirW;
+
         }
     }
 
     [ForceUnroll]
     for (int j = 0; j < N; j++)
     {
-        // Clamp the total weight to avoid NaNs.
-        totalWeight[j] = max(totalWeight[j], 1e-8f);
+        // Clamp the total weight from below to avoid NaNs.
+
 
         // Harmonic weighted mean.
-        warpedDirection[j] = totalWarpedDirection[j] / float3(totalWeight[j]);
+
     }
     // Leaving gradient alone, for each j,
     //   totalWeight[j] = sum(weight_i for each auxRay_i)
     //   warpedDirection[j] = sum(weight_i * warp_dir_i for each auxRay_i)
-    return totalWeight[0] > 0.f;
+
+    // return successful or not: Weight > 0
+    return false;
 }
 
 // Compute the warped-area reparameterization for (secondary) rays.
@@ -227,21 +184,19 @@ void computeWarpedRay(
     inout SampleGenerator sg
 )
 {
-    // store output from trace...()
-    float3 meanDirection[3];
-    if (traceAsymptoticWeightedMeanIntersection<3>(sceneQuery, kappa, origin, baseDirection, direction, meanDirection, sg))
+    // trace aux rays
+    if (true)
     {
         // do safe-normalize and store in output warpedDireection
         [ForceUnroll]
-        for (int j = 0; j < 3; j++)
-            warpedDirection[j] = normalizeSafe(meanDirection[j]);
+        for (int j = 0; j < 3; j++) {}
     }
     else
     {
         // If the ray is missed, just return the original sample direction
         [ForceUnroll]
-        for (int j = 0; j < 3; j++)
-            warpedDirection[j] = direction[j];
+        for (int j = 0; j < 3; j++) {}
+
     }
 }
 
@@ -251,27 +206,25 @@ void computeWarpedRay(
 [PreferRecompute]
 float reparameterizeRay(SceneQueryAD sceneQuery, inout RayAD ray, inout SampleGenerator sg)
 {
-    // Forward-mode gradients w.r.t. 3D ray dir
-    DifferentialPair<float3[3]> dpDirections = DifferentialPair<float3[3]>(
-        { ray.direction, ray.direction, ray.direction },  // all 3 primal are ray.dir
-        { float3(1.f, 0.f, 0.f), float3(0.f, 1.f, 0.f), float3(0.f, 0.f, 1.f) }  // unit x, y, z
-    );
+    // Build Forward-mode gradients w.r.t. 3D ray dir; type: DifferentialPair
+    // all 3 primal are ray.dir
+    // differential are unit x, y, z
+
 
     // Zero out any gradients from/to the scene for this Jacobian computation.
-    SceneQueryAD.Differential dQuery = {};
+
     // see static make() in Source\Falcor\DiffRendering\SceneGradientInfo.slang(41):
     //     Set (SceneQueryAD.Differential.gradInfo) dFlag = { GradientMode.None } to zero out gradients
     //     and make turn the enum GradientMode into SceneGradientFlag
-    dQuery.gradInfo = { SceneGradientFlag.make(GradientMode.None) };
+
 
     // Use the same (copy of) SampleGenerator for correlated samples.
-    SampleGenerator sgCopy = sg;
+
 
     // create output diffpair
-    DifferentialPair<float3[3]> dpWarpedDirections;
+
 
     // restore kappa from kLog10vMFConcentrationScreen
-    float kappa = pow(10.f, kLog10vMFConcentration);
 
     // Compute warped directions and differentials by calling fwd_diff on computeWarpedPrimarySample.
     // Need diffPair for
@@ -279,31 +232,20 @@ float reparameterizeRay(SceneQueryAD sceneQuery, inout RayAD ray, inout SampleGe
     // -ray.origin, but differential value should be trivial
     // -ray.direction, but differential value should be trivial
     // -direction (it's dpDirections)
-    fwd_diff(computeWarpedRay )(
-        diffPair(sceneQuery, dQuery),
-        kappa,
-        diffPair(ray.origin, float3(0.f)),
-        diffPair(ray.direction, float3(0.f)),
-        dpDirections,
-        dpWarpedDirections,
-        sgCopy
-    );
+    // see infinitesimal<N>
 
     // compute warped
-    // -ray dir
+    // -ray dir; Can use any of diffWarpDir.p[j].
     // -differential w.r.t. x, y, z
-    float3 warpDir = infinitesimal<3>(dpWarpedDirections.p[0]); // Can use any of dpWarpedDirections.p[j].
-    float3 warpDiffXDir = infinitesimal<3>(dpWarpedDirections.d[0]);
-    float3 warpDiffYDir = infinitesimal<3>(dpWarpedDirections.d[1]);
-    float3 warpDiffZDir = infinitesimal<3>(dpWarpedDirections.d[2]);
+
+
 
     // Compute Jacobian (3x3, I + <diffX, diffY, diffZ>) determinant.
-    float3x3 jacobian = no_diff float3x3::identity() + float3x3(warpDiffXDir, warpDiffYDir, warpDiffZDir);
-    float detJ = determinant(jacobian);
 
-    // Update the ray; return Jacobian determinant.
-    ray.direction += warpDir;
-    return detJ;
+
+    // Update the ray by accumulating warpDir; return Jacobian determinant.
+
+    return 1.f;
 }
 
 // Compute the warped-area reparameterization for (primary) screen samples.
@@ -320,30 +262,27 @@ void computeWarpedPrimarySample(
 )
 {
     // priRay origin is camera
-    float3 primaryRayOrigin = sceneQuery.loadCameraPosition();
-    // priRay dir is camera.pos to basePosS
-    float3 baseRayDir = sceneQuery.computeCameraRayDirection(basePosS, frameDim);
-    // ray dir differential: to posS[i]
-    float3 rayDir[2] = { sceneQuery.computeCameraRayDirection(posS[0], frameDim), sceneQuery.computeCameraRayDirection(posS[1], frameDim) };
 
-    // store output from trace...()
-    float3 meanDirection[2];
-    if (traceAsymptoticWeightedMeanIntersection<2>(sceneQuery, kappa, primaryRayOrigin, baseRayDir, rayDir, meanDirection, sg))
+    // priRay dir is camera.pos to basePosS
+
+    // ray dir differential: to posS[i]
+
+    // trace aux rays
+    if (true)
     {
         // Project the warped direction onto screen space by sceneQuery.computeCameraRayScreenPos()
         [ForceUnroll]
         for (int j = 0; j < 2; j++)
         {
-            float3 warpedDir = normalizeSafe(meanDirection[j]);
-            warpedPosS[j] = sceneQuery.computeCameraRayScreenPos(warpedDir, frameDim);
+            // do safe-normalize and store in output
+
         }
     }
     else
     {
         // If the ray is missed, just return the original sample.
         [ForceUnroll]
-        for (int j = 0; j < 2; j++)
-            warpedPosS[j] = posS[j];
+        for (int j = 0; j < 2; j++) {}
     }
 }
 
@@ -355,52 +294,41 @@ void computeWarpedPrimarySample(
 float reparameterizePrimarySample(SceneQueryAD sceneQuery, uint2 frameDim, SampleGenerator sg, inout float2 posS, )
 {
     // Forward-mode gradients w.r.t. screen-space position.
-    DifferentialPair<float2[2]> dpPosS = DifferentialPair<float2[2]>( { posS, posS }, { float2(1.f, 0.f), float2(0.f, 1.f) });
+
 
     // Zero out any gradients from/to the scene for this Jacobian computation.
-    SceneQueryAD.Differential dQuery = {};
+
     // see static make() in Source\Falcor\DiffRendering\SceneGradientInfo.slang(41):
     //     Set (SceneQueryAD.Differential.gradInfo) dFlag = { GradientMode.None } to zero out gradients
     //     and make turn the enum GradientMode into SceneGradientFlag
-    dQuery.gradInfo = { SceneGradientFlag.make(GradientMode.None) };
+
 
     // Use the same (copy of) SampleGenerator for correlated samples.
-    SampleGenerator sgCopy = sg;
+
 
     // create output diffpair
-    DifferentialPair<float2[2]> dpWarpedPosS;
+
 
     // restore kappa from kLog10vMFConcentrationScreen
-    float kappa = pow(10.f, kLog10vMFConcentrationScreen);
+
 
     // Compute warped directions and differentials by calling fwd_diff on computeWarpedPrimarySample.
     // Need diffPair for
     // -sceneQuery
     // -basePosS, but differential value should be trivial
     // -posS (it's dpPosS)
-    fwd_diff(computeWarpedPrimarySample)(
-        diffPair(sceneQuery, dQuery),
-        kappa,
-        frameDim,
-        diffPair(posS, float2(0.f)),
-        dpPosS,
-        dpWarpedPosS,
-        sgCopy
-    );
 
     // compute warped
-    // -screen pos
+    // -screen pos; Can use either dpWarpedPosS.p[0] or dpWarpedPosS.p[1].
     // -differential w.r.t. x
     // -differential w.r.t. y
-    float2 warpPosS = infinitesimal<2>(dpWarpedPosS.p[0]); // Can use either dpWarpedPosS.p[0] or dpWarpedPosS.p[1].
-    float2 warpDiffXPosS = infinitesimal<2>(dpWarpedPosS.d[0]);
-    float2 warpDiffYPosS = infinitesimal<2>(dpWarpedPosS.d[1]);
+    // see infinitesimal<N>
+
 
     // Compute Jacobian (2x2, I + <diffX, diffY>) determinant.
-    float2x2 jacobian = no_diff float2x2::identity() + float2x2(warpDiffXPosS, warpDiffYPosS);
-    float detJ = determinant(jacobian);
+
 
     // update posS with warped pos; return Jacobian determinant.
-    posS += warpPosS;
-    return detJ;
+
+    return 1.f;
 }
