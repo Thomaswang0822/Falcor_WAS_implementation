@@ -64,25 +64,27 @@ float computeHarmonicWeight(
     // Computation of weight_i, see WAS paper Algorithm 2,
     /// Don't know why sampleVonMisesFisher() maps uv.v to 1-uv.v, but need consistency
     float sy = 1.f - auxSampleY;
-    /*
-        // full derivation
-        /// step 0: compute dot(w, w') = cos(theta) locally = mu^T * x in Wikipedia notation
-        float cosTheta = 1.f + log(exp(-2.f * kappa) * (1.f - sy) + sy) / kappa;
-        /// step 1: compute exp(kappa * cos(theta)), used in 2 places below
-        float expTerm = exp(kappa * cosTheta);
-        /// step 2: compute pdf(w_i)
-        /// see Definition, https://en.wikipedia.org/w/index.php?title=Von_Mises%E2%80%93Fisher_distribution
-        float normC = kappa * M_1_2PI / (exp(kappa) - exp(-kappa));
+
+    /* // full derivation
+    // NUMERICAL ISSUE: kappa is very large, must avoid exp(kappa) or similar expression
+    //    see 2. Evaluations, https://www.mitsuba-renderer.org/~wenzel/files/vmf.pdf
+    /// step 0: compute dot(w, w') = cos(theta) locally = mu^T * x in Wikipedia notation
+    float cosTheta = 1.f + log(exp(-2.f * kappa) * (1.f - sy) + sy) / kappa;
+    /// step 1: compute exp(kappa * [cos(theta) - 1]): move a exp(kappa) from normC to the exp term
+    float expTerm = exp(kappa * (cosTheta - 1.f));
+    /// step 2: compute pdf(w_i)
+    /// see Definition, https://en.wikipedia.org/w/index.php?title=Von_Mises%E2%80%93Fisher_distribution
+    float normC = kappa * M_1_2PI / (1.f - exp(-2.f * kappa));
     float pdfVMF = normC * expTerm;
     /// step 3: compute denominator exp(kappa - kappa * cos(theta)) - 1 + B
-    float denom = exp(kappa) / expTerm - 1.f + B;
- */
+    /// observe that the exp() part is exactly 1/expTerm computed above
+    float denom = 1.0f / expTerm - 1.f + B; */
+
     // concise version
-    float expTerm = exp(kappa +
-        log(exp(-2.f * kappa) * (1.f - sy) + sy)
-    );
-    float pdfVMF = kappa * M_1_2PI / (exp(kappa) - exp(-kappa)) * expTerm;
-    float denom = exp(kappa) / expTerm - 1.f + B;
+    /// key is expand cosTheta in the expTerm. Have a lot to cancel.
+    float expTerm = (1.f - sy) * exp(-2.f * kappa) + sy;
+    float pdfVMF = kappa * M_1_2PI / (1.f - exp(-2.f * kappa)) * expTerm;
+    float denom = 1.0f / expTerm - 1.f + B;
 
     return 1 / denom / pdfVMF;
 }
