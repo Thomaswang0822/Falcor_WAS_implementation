@@ -268,8 +268,8 @@ float reparameterizeRay(SceneQueryAD sceneQuery, inout RayAD ray, inout SampleGe
     // create output diffpair
     DifferentialPair<float3[3]> dpWarpedDirections;
 
-    // restore kappa from kLog10vMFConcentrationScreen
-    float kappa = pow(10.f, kLog10vMFConcentrationScreen);
+    // BLIND COPY: should change to kLog10vMFConcentration, not kLog10vMFConcentrationScreen!
+    float kappa = pow(10.f, kLog10vMFConcentration);
 
     // Compute warped directions and differentials by calling fwd_diff on computeWarpedRay().
     // Need diffPair for
@@ -298,7 +298,7 @@ float reparameterizeRay(SceneQueryAD sceneQuery, inout RayAD ray, inout SampleGe
     float3 diffZ = infinitesimal<3>(dpWarpedDirections.d[2]);
 
     // Compute Jacobian (3x3, I + <diffX, diffY, diffZ>) determinant.
-    float3x3 jacobian = float3x3(1.f) + float3x3(diffX, diffY, diffZ);
+    float3x3 jacobian = no_diff float3x3::identity() + float3x3(diffX, diffY, diffZ);
     float detJ = determinant(jacobian);
 
     // Update the ray by accumulating warpDir; return Jacobian determinant.
@@ -407,7 +407,7 @@ float reparameterizePrimarySample(SceneQueryAD sceneQuery, uint2 frameDim, Sampl
     float2 diffY = infinitesimal<2>(dpWarpedScreen.d[1]);
 
     // Compute Jacobian (2x2, I + <diffX, diffY>) determinant.
-    float2x2 jacobian = float2x2(1.f) + float2x2(diffX, diffY);
+    float2x2 jacobian = no_diff float2x2::identity() + float2x2(diffX, diffY);
     float detJ = determinant(jacobian);
 
     // update posS with warped pos; return Jacobian determinant.
