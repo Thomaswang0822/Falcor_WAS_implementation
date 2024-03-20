@@ -144,7 +144,8 @@ __generic<let N : int> bool traceAsymptoticWeightedMeanIntersection(
         {
             // auxRay_i and auxRay_(i+1) shares the same 2 rnd numbers
             // i.e. want i and i+1 to use rndNums[i] and rndNums[i+1]
-            rndXY = { rndNums[i + i % 2], rndNums[i + 1 - i % 2] };
+            uint antitheticIdx = i / 2;
+            rndXY = float2(rndNums[antitheticIdx * 2], rndNums[antitheticIdx * 2 + 1]);
         }
         else
         {
@@ -185,7 +186,7 @@ __generic<let N : int> bool traceAsymptoticWeightedMeanIntersection(
             // for each i, weight_ij are the same for all j, since direction[j] is for autodiff, not computation
             float w_i = computeHarmonicWeight(auxIsect, origin, auxDir, rndXY.y, kappa, direction[j]);
             totalW[j] += w_i;
-            totalWDir[j] += auxDir * w_i;
+            totalWDir[j] += aDir * w_i;  // should use normalized aDir here!
         }
     }
 
@@ -277,10 +278,10 @@ float reparameterizeRay(SceneQueryAD sceneQuery, inout RayAD ray, inout SampleGe
     // -ray.direction, but differential value should be trivial
     // -direction (it's dpScene)
     fwd_diff(computeWarpedRay )(
-        { sceneQuery, dScene },
+        diffPair(sceneQuery, dScene),
         kappa,
-        { ray.origin, float3(0.f) },
-        { ray.direction, float3(0.f) },
+        diffPair(ray.origin, float3(0.f)),
+        diffPair(ray.direction, float3(0.f)),
         dpScene,
         dpWarpedDirections,
         sgCopy
@@ -387,10 +388,10 @@ float reparameterizePrimarySample(SceneQueryAD sceneQuery, uint2 frameDim, Sampl
     // -basePosS, but differential value should be trivial
     // -posS (it's dpPosS)
     fwd_diff(computeWarpedPrimarySample )(
-        { sceneQuery, dScreen },
+        diffPair(sceneQuery, dScreen),
         kappa,
         frameDim,
-        { posS, float2(0.f) },
+        diffPair(posS, float2(0.f)),
         dpScreen,
         dpWarpedScreen,
         sgCopy

@@ -199,7 +199,7 @@ void rayGen()
     {
         // Primal rendering.
         float3 RGB = tracePaths(sceneQuery, pixel);
-        gOutputDColor[pixel] = float4(RGB, 1.f);
+        gOutputColor[pixel] = float4(RGB, 1.f);
     }
     else if (kDiffMode == DiffMode::BackwardDiff)
     {
@@ -208,7 +208,7 @@ void rayGen()
         if (gDiffPTData.params.runBackward == 0)
         {
             float3 RGB = tracePaths(sceneQuery, pixel);
-            gOutputDColor[pixel] = float4(RGB, 1.f);
+            gOutputColor[pixel] = float4(RGB, 1.f);
         }
         else
         {
@@ -241,7 +241,7 @@ void rayGen()
         DifferentialPair<float3> dpColor = fwd_diff(tracePaths)(dpScene, pixel);
 
         // and use it to write to output gOutputColor
-        gOutputDColor[pixel] = float4(dpColor.p, 1.f);
+        gOutputColor[pixel] = float4(dpColor.p, 1.f);
 
         // CHECK gradient values (using gDiffPTData.params.assertThreshold)
         // only store values within the bound
