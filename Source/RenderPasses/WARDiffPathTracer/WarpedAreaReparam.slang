@@ -64,15 +64,15 @@ float computeHarmonicWeight(
     // Computation of weight_i, see WAS paper Algorithm 2,
     /// Don't know why sampleVonMisesFisher() maps uv.v to 1-uv.v, but need consistency
     float sy = 1.f - auxSampleY;
-/*
-    // full derivation
-    /// step 0: compute dot(w, w') = cos(theta) locally = mu^T * x in Wikipedia notation
-    float cosTheta = 1.f + log(exp(-2.f * kappa) * (1.f - sy) + sy) / kappa;
-    /// step 1: compute exp(kappa * cos(theta)), used in 2 places below
-    float expTerm = exp(kappa * cosTheta);
-    /// step 2: compute pdf(w_i)
-    /// see Definition, https://en.wikipedia.org/w/index.php?title=Von_Mises%E2%80%93Fisher_distribution
-    float normC = kappa * 0.5f * M_1_PI / (exp(kappa) - exp(-kappa));
+    /*
+        // full derivation
+        /// step 0: compute dot(w, w') = cos(theta) locally = mu^T * x in Wikipedia notation
+        float cosTheta = 1.f + log(exp(-2.f * kappa) * (1.f - sy) + sy) / kappa;
+        /// step 1: compute exp(kappa * cos(theta)), used in 2 places below
+        float expTerm = exp(kappa * cosTheta);
+        /// step 2: compute pdf(w_i)
+        /// see Definition, https://en.wikipedia.org/w/index.php?title=Von_Mises%E2%80%93Fisher_distribution
+        float normC = kappa * M_1_2PI / (exp(kappa) - exp(-kappa));
     float pdfVMF = normC * expTerm;
     /// step 3: compute denominator exp(kappa - kappa * cos(theta)) - 1 + B
     float denom = exp(kappa) / expTerm - 1.f + B;
@@ -81,7 +81,7 @@ float computeHarmonicWeight(
     float expTerm = exp(kappa +
         log(exp(-2.f * kappa) * (1.f - sy) + sy)
     );
-    float pdfVMF = kappa * 0.5f * M_1_PI / (exp(kappa) - exp(-kappa)) * expTerm;
+    float pdfVMF = kappa * M_1_2PI / (exp(kappa) - exp(-kappa)) * expTerm;
     float denom = exp(kappa) / expTerm - 1.f + B;
 
     return 1 / denom / pdfVMF;
