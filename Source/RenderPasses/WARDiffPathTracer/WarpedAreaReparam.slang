@@ -71,22 +71,23 @@ float computeHarmonicWeight(
     /// step 0: compute dot(w, w') = cos(theta) locally = mu^T * x in Wikipedia notation
     float cosTheta = 1.f + log(exp(-2.f * kappa) * (1.f - sy) + sy) / kappa;
     /// step 1: compute exp(kappa * [cos(theta) - 1]): move a exp(kappa) from normC to the exp term
-    float expTerm = exp(kappa * (cosTheta - 1.f));
+    float expTerm = exp(kappa * (1.f - cosTheta));
     /// step 2: compute pdf(w_i)
     /// see Definition, https://en.wikipedia.org/w/index.php?title=Von_Mises%E2%80%93Fisher_distribution
+    /// observe that the exp() part in pdf is exactly 1/expTerm computed above
     float normC = kappa * M_1_2PI / (1.f - exp(-2.f * kappa));
-    float pdfVMF = normC * expTerm;
+    float pdfVMFinv = expTerm / normC;
     /// step 3: compute denominator exp(kappa - kappa * cos(theta)) - 1 + B
-    /// observe that the exp() part is exactly 1/expTerm computed above
-    float denom = 1.0f / expTerm - 1.f + B; */
+    float denom = expTerm - 1.f + B; */
 
     // concise version
     /// key is expand cosTheta in the expTerm. Have a lot to cancel.
     float expTerm = (1.f - sy) * exp(-2.f * kappa) + sy;
-    float pdfVMF = kappa * M_1_2PI / (1.f - exp(-2.f * kappa)) * expTerm;
-    float denom = 1.0f / expTerm - 1.f + B;
+    float pdfVMFinv = M_2PI * (1.f - exp(-2.f * kappa)) * expTerm / kappa;
+    float denom = expTerm - 1.f + B;
 
-    return 1 / denom / pdfVMF;
+    // w = 1 / denom / pdf
+    return pdfVMFinv / denom;
 }
 
 

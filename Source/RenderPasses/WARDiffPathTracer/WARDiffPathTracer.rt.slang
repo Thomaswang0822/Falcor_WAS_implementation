@@ -86,8 +86,8 @@ float3 tracePath(
 )
 {
     // create empty PathData and IntersectionAD
-    PathData pathData;
-    IntersectionAD isectAD;
+    PathData pathData = PathData();
+    IntersectionAD isectAD = IntersectionAD();
 
 
     // Warped-area reparameterization for primary rays. Check kUseWAR
@@ -104,22 +104,24 @@ float3 tracePath(
 
     // construct a differentiable RayAD; detach origin; get pixel from sceneQuery
     RayAD ray = RayAD(
-        sceneQuery.loadCameraPosition(),
+        detach(sceneQuery.loadCameraPosition()),
         sceneQuery.computeCameraRayDirection(pixel, gDiffPTData.params.frameDim),
         sceneQuery.gradInfo.pixel  // uint2 pixel index
     );
 
-
-    // while (condition A and condition B)
-    // A. not terminated
-    // B. whether ray hits during differentiable PT; DiffIntersectionMode should be AttachToRay;
+    // while (A and !B)
+    // A. whether ray hits during differentiable PT; DiffIntersectionMode should be AttachToRay;
+    // B. terminated
+    // DEBUG NOTE:
+    // while (A and !B) doesn't work but while (A) {break on B} works for bwd_diff test
     [MaxIters(MAX_BOUNCES + 2)]
     while (
-        !pathData.terminated &&
         sceneQuery.traceRayInlineAD(ray, isectAD, SceneQueryAD.DiffIntersectionMode.AttachToRay)
     )
     {
-        // handleHit(): it will do computations and update terminated flag
+        if (pathData.terminated)
+            break;
+
         handleHit(sceneQuery, isectAD, gDiffPTData.emissiveSampler, pathData, ray, sg, kUseWAR);
     }
 
