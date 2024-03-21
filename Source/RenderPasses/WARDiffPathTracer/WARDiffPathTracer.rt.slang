@@ -73,7 +73,7 @@ float evalGaussian(float2 xy, no_diff float sigma)
     // simplied to (1 / two_pi * sigma^2) * exp(-0.5 * x^2 + y^2 / sigma^2)
     // (1 / 2 * sigma^2) can be reused
     float temp = 0.5f / (sigma * sigma);
-    return temp * M_1_PI * exp(temp * dot(xy, xy));
+    return temp * M_1_PI * exp(-temp * dot(xy, xy));  // final bug: MISSING minus sign!
 }
 
 // Trace an interior path.
