@@ -2,7 +2,7 @@ from falcor import *
 
 def render_graph_WARDiffPathTracer():
     g = RenderGraph("WARDiffPathTracer")
-    WARDiffPathTracer = createPass("WARDiffPathTracer", {"maxBounces": 0, "samplesPerPixel": 1, "diffMode": "BackwardDiffDebug", "diffVarName": "CBOX_BUNNY_TRANSLATION"})
+    WARDiffPathTracer = createPass("WARDiffPathTracer", {"maxBounces": 4, "samplesPerPixel": 8, "diffMode": "BackwardDiffDebug", "diffVarName": "CBOX_BUNNY_TRANSLATION"})
     g.addPass(WARDiffPathTracer, "WARDiffPathTracer")
 
     AccumulatePassPrimal = createPass("AccumulatePass", {"enabled": True, "precisionMode": "Single"})
