@@ -14,7 +14,10 @@
 
 # IDE folders.
 /.vs/
-/.vscode/
+
+# Track launch.json (for debugger) and setting.json (for runner)
+# for convenient WAS runs
+# /.vscode/
 
 # User files.
 /CMakeUserPresets.json
