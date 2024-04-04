@@ -21,6 +21,7 @@
 
 # User files.
 /CMakeUserPresets.json
+img_test_results
 
 # File types.
 *.user
