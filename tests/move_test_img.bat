@@ -4,12 +4,18 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Define the base paths
-set "original_path=tests\data\refs"
-set "destination_path=img_test_results"
+REM Set the original path based on the argument, defaulting to "results" if no argument is provided
+if "%1"=="refs" (
+    set "original_path=tests\data\refs"
+) else if "%1"=="results" (
+    set "original_path=tests\data\results"
+) else (
+    set "original_path=tests\data\results"
+)
 
 REM Define the fixed intermediate path
 set "intermediate_path=windows-ninja-msvc-Release\renderpasses"
+set "destination_path=img_test_results"
 
 REM Loop through each branch folder
 for /d %%A in ("%original_path%\*") do (
