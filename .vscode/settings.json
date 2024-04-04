@@ -9,6 +9,11 @@
             "--scene=${workspaceFolder}/media/test_scenes/bunny_war_diff_pt.pyscene"
         ]
     },
+    "slang.predefinedMacros":[
+        "AUX_SAMPLE_COUNT=16",
+        "SampleGenerator=TinyUniformSampleGenerator",
+        "MAX_BOUNCES=4",
+    ],
     "cmake.configureOnEdit": false,
     "C_Cpp.clang_format_path": "${workspaceFolder}/tools/.packman/clang-format/clang-format",
     "slang.format.clangFormatLocation": "${workspaceFolder}/tools/.packman/clang-format/clang-format",
