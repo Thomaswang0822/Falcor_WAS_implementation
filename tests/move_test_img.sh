@@ -3,16 +3,24 @@
 
 #!/bin/bash
 
-# Define the base paths
-original_path="tests/data/refs"
-destination_path="img_test_results"
+# Set the original path based on the argument, defaulting to "results" if no argument is provided
+if [[ "$1" == "refs" ]]; then
+    original_path="tests/data/refs"
+elif [[ "$1" == "results" ]]; then
+    original_path="tests/data/results"
+else
+    original_path="tests/data/results"
+fi
 
 # Define the fixed intermediate path
 intermediate_path="windows-ninja-msvc-Release/renderpasses"
+destination_path="img_test_results"
 
 # Loop through each branch folder
 for branch_folder in "$original_path"/*; do
     branch_name=$(basename "$branch_folder")
+
+    # Construct the destination branch path
     destination_branch_path="$destination_path/$branch_name"
 
     # Create destination branch folder if not exists
